@@ -64,9 +64,11 @@
     .status-banner .current-time {
       font-size: 2.6rem;
       font-weight: 800;
-      margin: 0.3rem 0;
+      margin: 0.3rem auto;
       letter-spacing: -0.02em;
       font-variant-numeric: tabular-nums;
+      text-align: center;
+      width: fit-content;
     }
     .status-banner .date-display {
       font-size: 0.85rem;
@@ -442,7 +444,7 @@
     function buildTimeSlots() {
       const slots = [];
       let h = 5, m = 30;
-      while (h < 21 || (h === 21 && m === 30)) {
+      while (h < 21 || (h === 21 && m <= 30)) {
         slots.push({
           hour: h, minute: m,
           label: `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`,

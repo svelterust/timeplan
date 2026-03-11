@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="no" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Odd-Haralds Timeplan</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+
+  <style>
+    :root {
+      --block-freelance: #4f6df5;
+      --block-gym: #e8445a;
+      --block-study: #7c5cbf;
+      --block-read: #d4942a;
+      --block-sleep: #64748b;
+      --block-prayer: #1e293b;
+
+      --block-umrah: #0891b2;
+      --block-free: transparent;
+
+      --bg-warm: #faf9f7;
+      --text-primary: #1e293b;
+      --text-muted: #94a3b8;
+      --border-light: #e2e8f0;
+      --surface: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg-warm);
+      color: var(--text-primary);
+      padding-bottom: 2rem;
+    }
+
+    h2, h3, h4 { font-family: system-ui, -apple-system, sans-serif; }
+
+    /* ── Status banner ── */
+    .status-banner {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      color: #f8fafc;
+      padding: 2rem 1.5rem;
+      border-radius: 16px;
+      margin-bottom: 1.25rem;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(30, 41, 59, 0.15);
+    }
+    .status-banner h2 {
+      margin: 0 0 0.15rem 0;
+      color: inherit;
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: 0.02em;
+      opacity: 0.85;
+    }
+    .status-banner .current-time {
+      font-size: 2.6rem;
+      font-weight: 800;
+      margin: 0.3rem 0;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+    .status-banner .date-display {
+      font-size: 0.85rem;
+      opacity: 0.7;
+      margin-bottom: 0.75rem;
+    }
+    .status-banner .current-block {
+      font-size: 1.2rem;
+      margin: 0.6rem 0 0.3rem;
+      font-weight: 500;
+    }
+    .status-banner .next-event {
+      font-size: 0.9rem;
+      opacity: 0.75;
+    }
+    .status-banner .countdown {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-top: 0.15rem;
+      color: #fbbf24;
+    }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.7rem;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #fff;
+    }
+    .badge-freelance { background: var(--block-freelance); }
+    .badge-gym { background: var(--block-gym); }
+    .badge-study { background: var(--block-study); }
+    .badge-read { background: var(--block-read); }
+    .badge-sleep { background: var(--block-sleep); }
+    .badge-prayer { background: var(--block-prayer); }
+
+    .badge-umrah { background: var(--block-umrah); }
+
+    /* ── Availability ── */
+    .availability {
+      text-align: center;
+      padding: 0.9rem 1rem;
+      border-radius: 12px;
+      margin-bottom: 1.25rem;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .availability.busy {
+      background: #fef2f2;
+      border: 1.5px solid #fca5a5;
+      color: #dc2626;
+    }
+    .availability.free {
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      color: #16a34a;
+    }
+
+    /* ── Section card ── */
+    .section-card {
+      background: var(--surface);
+      border-radius: 14px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+      border: 1px solid var(--border-light);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .section-card h3 {
+      margin: 0 0 0.75rem 0;
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+
+    /* ── Prayer times ── */
+    .prayer-grid {
+      display: flex;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+    }
+    .prayer-card {
+      display: flex;
+      align-items: baseline;
+      gap: 0.3rem;
+      padding: 0.3rem 0.55rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-light);
+      font-size: 0.78rem;
+    }
+    .prayer-card.active {
+      background: var(--block-prayer);
+      border-color: var(--block-prayer);
+    }
+    .prayer-card.active .prayer-name,
+    .prayer-card.active .prayer-time,
+    .prayer-card.active .prayer-sub {
+      color: #fff;
+    }
+    .prayer-card .prayer-name {
+      font-weight: 600;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--text-muted);
+    }
+    .prayer-card .prayer-time {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-primary);
+      font-size: 0.78rem;
+    }
+    .prayer-card .prayer-sub {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Schedule table ── */
+    .schedule-table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 0 -0.25rem;
+    }
+    .schedule-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 2px;
+      font-size: 0.75rem;
+    }
+    .schedule-table th {
+      text-align: center;
+      padding: 0.5rem 0.25rem;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+    .schedule-table td {
+      text-align: center;
+      padding: 0.3rem 0.15rem;
+      font-size: 0.65rem;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .schedule-table td.time-col {
+      font-weight: 600;
+      text-align: right;
+      padding-right: 0.5rem;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+      font-size: 0.68rem;
+      background: transparent;
+    }
+    .schedule-table td.block-cell {
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.58rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .schedule-table td.block-freelance { background: var(--block-freelance); }
+    .schedule-table td.block-gym { background: var(--block-gym); }
+    .schedule-table td.block-study { background: var(--block-study); }
+    .schedule-table td.block-read { background: var(--block-read); }
+    .schedule-table td.block-sleep { background: var(--block-sleep); }
+    .schedule-table td.block-prayer { background: var(--block-prayer); }
+
+    .schedule-table td.block-umrah { background: var(--block-umrah); }
+    .schedule-table td.block-free { background: var(--bg-warm); color: var(--text-muted); }
+
+
+
+    /* Current column - subtle darkening on today's column */
+    .schedule-table td.current-col {
+      filter: brightness(0.92);
+    }
+    .schedule-table td.current-col.block-free {
+      background: rgba(0, 0, 0, 0.04);
+      filter: none;
+    }
+
+    /* Current row - darkened cells */
+    .schedule-table tr.current-row td.block-cell {
+      filter: brightness(0.82);
+    }
+    .schedule-table tr.current-row td.block-free {
+      background: rgba(0, 0, 0, 0.06);
+      filter: none;
+    }
+    .schedule-table tr.current-row td.time-col {
+      color: var(--text-primary);
+      font-weight: 800;
+    }
+
+    /* Intersection: current row + current column - strongest darkening */
+    .schedule-table td.current-cell {
+      filter: brightness(0.7);
+      outline: 2px solid rgba(0, 0, 0, 0.3);
+      outline-offset: -1px;
+    }
+    .schedule-table td.current-cell.block-free {
+      background: rgba(0, 0, 0, 0.12);
+      filter: none;
+    }
+
+    .schedule-table th.current-day-header {
+      color: var(--text-primary);
+      font-weight: 800;
+    }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.75rem;
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 768px) {
+      .status-banner { padding: 1.5rem 1rem; border-radius: 12px; }
+      .status-banner .current-time { font-size: 2rem; }
+      .status-banner .current-block { font-size: 1rem; }
+      .status-banner .countdown { font-size: 1.1rem; }
+      .section-card { padding: 1rem; }
+      .schedule-table td.block-cell { font-size: 0.5rem; }
+      .schedule-table td { padding: 0.25rem 0.1rem; }
+      .schedule-table th { font-size: 0.58rem; }
+    }
+
+
+  </style>
+</head>
+<body>
+  <main class="container">
+
+    <!-- Status -->
+    <section class="status-banner">
+      <h2>Odd-Haralds Timeplan</h2>
+      <div class="current-time" id="currentTime">--:--:--</div>
+      <div class="date-display" id="dateDisplay"></div>
+      <div class="current-block" id="currentBlock">Laster...</div>
+      <div class="next-event" id="nextEvent">--</div>
+      <div class="countdown" id="countdown">--:--</div>
+    </section>
+
+    <!-- Availability -->
+    <div class="availability" id="availability">Laster...</div>
+
+    <!-- Prayer times -->
+    <section class="section-card">
+      <h3>Salaah-tider i dag</h3>
+      <div class="prayer-grid" id="prayerGrid">
+        <div class="prayer-card" data-prayer="fajr">
+          <div class="prayer-name">Fajr</div>
+          <div class="prayer-time" id="pt-fajr">--:--</div>
+          <div class="prayer-sub" id="pt-fajr-adhan"></div>
+        </div>
+        <div class="prayer-card" data-prayer="sunrise">
+          <div class="prayer-name">Soloppgang</div>
+          <div class="prayer-time" id="pt-sunrise">--:--</div>
+          <div class="prayer-sub"></div>
+        </div>
+        <div class="prayer-card" data-prayer="dhuhr">
+          <div class="prayer-name">Dhuhr</div>
+          <div class="prayer-time" id="pt-dhuhr">--:--</div>
+          <div class="prayer-sub" id="pt-dhuhr-adhan"></div>
+        </div>
+        <div class="prayer-card" data-prayer="asr">
+          <div class="prayer-name">Asr</div>
+          <div class="prayer-time" id="pt-asr">--:--</div>
+          <div class="prayer-sub" id="pt-asr-adhan"></div>
+        </div>
+        <div class="prayer-card" data-prayer="maghrib">
+          <div class="prayer-name">Maghrib</div>
+          <div class="prayer-time" id="pt-maghrib">--:--</div>
+          <div class="prayer-sub" id="pt-maghrib-adhan"></div>
+        </div>
+        <div class="prayer-card" data-prayer="isha">
+          <div class="prayer-name">Isha</div>
+          <div class="prayer-time" id="pt-isha">--:--</div>
+          <div class="prayer-sub" id="pt-isha-adhan"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Full schedule -->
+    <section class="section-card">
+      <h3>Ukentlig timeplan</h3>
+      <div class="legend">
+        <span class="badge badge-freelance">Jobb</span>
+        <span class="badge badge-gym">Trening</span>
+        <span class="badge badge-study">Studie</span>
+        <span class="badge badge-prayer">Salaah</span>
+        <span class="badge badge-read">Lesing</span>
+        <span class="badge badge-sleep">Sover</span>
+        <span class="badge badge-umrah">Umrah</span>
+      </div>
+      <div class="schedule-table-wrap">
+        <table class="schedule-table" id="scheduleTable">
+          <thead>
+            <tr>
+              <th>Tid</th>
+              <th>Man</th>
+              <th>Tir</th>
+              <th>Ons</th>
+              <th>Tor</th>
+              <th>Fre</th>
+              <th>Lør</th>
+              <th>Søn</th>
+            </tr>
+          </thead>
+          <tbody id="scheduleBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+
+  </main>
+
+  <script>
+    // ── CONFIG ──
+    const TIMEZONE = 'Africa/Cairo';
+    const LAT = 30.1070;
+    const LNG = 31.6386;
+    const API_METHOD = 5; // Egyptian General Authority of Survey
+
+    // Iqama offsets (minutes after adhan)
+    const IQAMA_OFFSETS = {
+      Fajr: 20, Dhuhr: 20, Asr: 20, Maghrib: 10, Isha: 20
+    };
+
+    // Add minutes to a "HH:MM" string, return "HH:MM"
+    function addMinutesToTime(timeStr, mins) {
+      const [h, m] = timeStr.split(':').map(Number);
+      const total = h * 60 + m + mins;
+      const nh = Math.floor(total / 60) % 24;
+      const nm = total % 60;
+      return `${nh.toString().padStart(2,'0')}:${nm.toString().padStart(2,'0')}`;
+    }
+
+    // Get iqama time for a prayer
+    function getIqamaTime(prayerName, adhanTime) {
+      const offset = IQAMA_OFFSETS[prayerName];
+      return offset ? addMinutesToTime(adhanTime, offset) : adhanTime;
+    }
+
+    const DAYS_NO = ['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'];
+    const DAY_MAP = {1:0, 2:1, 3:2, 4:3, 5:4, 6:5, 0:6}; // JS day -> column
+
+    // Norwegian display names for activities
+    const DISPLAY_NAMES = {
+      'FREELANCE': 'Jobb',
+      'GYM': 'Trening',
+      'STUDY': 'Studie',
+      'READ': 'Lesing',
+      'SLEEP': 'Sover',
+      'ASR': 'Asr',
+      'MAGHRIB': 'Maghrib',
+      'ISHA': 'Isha',
+      'FAJR': 'Fajr',
+
+      'UMRAH': 'Umrah',
+    };
+
+    // ── TIME SLOTS (24h format) ──
+    function buildTimeSlots() {
+      const slots = [];
+      let h = 5, m = 30;
+      while (h < 21 || (h === 21 && m === 30)) {
+        slots.push({
+          hour: h, minute: m,
+          label: `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`,
+          minutes: h * 60 + m
+        });
+        m += 30;
+        if (m >= 60) { h++; m = 0; }
+      }
+      return slots;
+    }
+
+    const TIME_SLOTS = buildTimeSlots();
+
+    function getBaseSchedule() {
+      const grid = {};
+      TIME_SLOTS.forEach(slot => {
+        grid[slot.label] = ['', '', '', '', '', '', ''];
+      });
+
+      TIME_SLOTS.forEach((slot) => {
+        const mins = slot.minutes;
+
+        // FREELANCE Mon-Thu 05:30-13:00
+        if (mins >= 330 && mins < 780) {
+          grid[slot.label][0] = 'FREELANCE';
+          grid[slot.label][1] = 'FREELANCE';
+          grid[slot.label][2] = 'FREELANCE';
+          grid[slot.label][3] = 'FREELANCE';
+        }
+        // FREELANCE Fri 05:30-12:00
+        if (mins >= 330 && mins < 720) {
+          grid[slot.label][4] = 'FREELANCE';
+        }
+
+        // UMRAH Sat+Sun 05:30-13:00
+        if (mins >= 330 && mins < 780) {
+          grid[slot.label][5] = 'UMRAH';
+          grid[slot.label][6] = 'UMRAH';
+        }
+        // GYM Mon, Wed, Sat 14:30-15:30
+        if (mins >= 870 && mins < 930) {
+          grid[slot.label][0] = 'GYM';
+          grid[slot.label][2] = 'GYM';
+          grid[slot.label][5] = 'GYM';
+        }
+        // STUDY Tue, Thu, Sun 14:30-15:30
+        if (mins >= 870 && mins < 930) {
+          grid[slot.label][1] = 'STUDY';
+          grid[slot.label][3] = 'STUDY';
+          grid[slot.label][6] = 'STUDY';
+        }
+        // READ 21:00-21:30
+        if (mins >= 1260 && mins < 1290) {
+          for (let d = 0; d < 7; d++) grid[slot.label][d] = 'READ';
+        }
+        // SLEEP 21:30+
+        if (mins >= 1290) {
+          for (let d = 0; d < 7; d++) grid[slot.label][d] = 'SLEEP';
+        }
+      });
+
+      return grid;
+    }
+
+    // Inject Asr, Maghrib, Isha into day columns based on iqama times
+    function injectPrayers(grid, prayerTimes) {
+      if (!prayerTimes) return grid;
+      ['Asr','Maghrib','Isha'].forEach(p => {
+        const iqamaTime = getIqamaTime(p, prayerTimes[p]);
+        const slotLabel = findSlotForTime(iqamaTime);
+        if (slotLabel && grid[slotLabel]) {
+          for (let d = 0; d < 7; d++) {
+            grid[slotLabel][d] = p.toUpperCase();
+          }
+        }
+      });
+      return grid;
+    }
+
+
+
+    function findSlotForTime(timeStr) {
+      if (!timeStr) return null;
+      const [h, m] = timeStr.split(':').map(Number);
+      const totalMin = h * 60 + m;
+      for (let i = 0; i < TIME_SLOTS.length; i++) {
+        if (totalMin >= TIME_SLOTS[i].minutes && totalMin < TIME_SLOTS[i].minutes + 30) {
+          return TIME_SLOTS[i].label;
+        }
+      }
+      return null;
+    }
+
+    // ── STATE ──
+    let prayerTimesData = null;
+    let hijriDate = null;
+
+    // ── FETCH PRAYER TIMES ──
+    async function fetchPrayerTimes() {
+      try {
+        const res = await fetch(
+          `https://api.aladhan.com/v1/timings?latitude=${LAT}&longitude=${LNG}&method=${API_METHOD}`
+        );
+        const data = await res.json();
+        if (data.code === 200) {
+          prayerTimesData = data.data.timings;
+          hijriDate = data.data.date.hijri;
+          updatePrayerDisplay();
+          renderSchedule();
+        }
+      } catch (e) {
+        console.error('Kunne ikke hente salaah-tider:', e);
+      }
+    }
+
+    function updatePrayerDisplay() {
+      if (!prayerTimesData) return;
+      // Show iqama as main time, adhan as subtitle
+      ['Fajr','Sunrise','Dhuhr','Asr','Maghrib','Isha'].forEach(p => {
+        const el = document.getElementById(`pt-${p.toLowerCase()}`);
+        const adhanEl = document.getElementById(`pt-${p.toLowerCase()}-adhan`);
+        if (p === 'Sunrise') {
+          if (el) el.textContent = prayerTimesData[p];
+        } else {
+          const iqama = getIqamaTime(p, prayerTimesData[p]);
+          if (el) el.textContent = iqama;
+          if (adhanEl) adhanEl.textContent = `Adhan: ${prayerTimesData[p]}`;
+        }
+      });
+
+      const now = getNow();
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+      // Use iqama times for highlighting current prayer period
+      const prayerMins = ['Fajr','Dhuhr','Asr','Maghrib','Isha'].map(p => {
+        const iqama = getIqamaTime(p, prayerTimesData[p]);
+        const [h, m] = iqama.split(':').map(Number);
+        return { name: p, mins: h * 60 + m };
+      });
+
+      document.querySelectorAll('.prayer-card').forEach(c => c.classList.remove('active'));
+      for (let i = prayerMins.length - 1; i >= 0; i--) {
+        if (nowMins >= prayerMins[i].mins) {
+          const card = document.querySelector(`.prayer-card[data-prayer="${prayerMins[i].name.toLowerCase()}"]`);
+          if (card) card.classList.add('active');
+          break;
+        }
+      }
+
+      // Dates
+      if (hijriDate) {
+        const greg = now.toLocaleDateString('nb-NO', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: TIMEZONE
+        });
+        const dateEl = document.getElementById('dateDisplay');
+        dateEl.innerHTML = greg.charAt(0).toUpperCase() + greg.slice(1) +
+          `<br>${hijriDate.day} ${hijriDate.month.en} ${hijriDate.year} AH`;
+      }
+    }
+
+    // ── SCHEDULE RENDERING ──
+    function renderSchedule() {
+      const grid = injectPrayers(getBaseSchedule(), prayerTimesData);
+      const tbody = document.getElementById('scheduleBody');
+      const thead = document.querySelector('#scheduleTable thead tr');
+      const now = getNow();
+      const jsDay = now.getDay();
+      const schedCol = DAY_MAP[jsDay];
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+
+      const ths = thead.querySelectorAll('th');
+      ths.forEach((th, i) => {
+        if (i === 0) return;
+        th.classList.toggle('current-day-header', i - 1 === schedCol);
+      });
+
+      tbody.innerHTML = '';
+      TIME_SLOTS.forEach(slot => {
+        const tr = document.createElement('tr');
+        const isCurrentRow = nowMins >= slot.minutes && nowMins < slot.minutes + 30;
+        if (isCurrentRow) tr.classList.add('current-row');
+
+        const tdTime = document.createElement('td');
+        tdTime.className = 'time-col';
+        tdTime.textContent = slot.label;
+        tr.appendChild(tdTime);
+
+        const row = grid[slot.label];
+        for (let d = 0; d < 7; d++) {
+          const td = document.createElement('td');
+          const val = row[d];
+          td.className = 'block-cell';
+          if (val) {
+            const cls = val.toLowerCase();
+            if (['asr','maghrib','isha','fajr'].includes(cls)) {
+              td.classList.add('block-prayer');
+            } else {
+              td.classList.add(`block-${cls}`);
+            }
+            td.textContent = DISPLAY_NAMES[val] || val;
+          } else {
+            td.classList.add('block-free');
+          }
+          if (d === schedCol) {
+            td.classList.add('current-col');
+          }
+          if (d === schedCol && isCurrentRow) {
+            td.classList.add('current-cell');
+          }
+          tr.appendChild(td);
+        }
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ── TIME HELPERS ──
+    function getNow() {
+      return new Date(new Date().toLocaleString('en-US', { timeZone: TIMEZONE }));
+    }
+
+    function getCurrentActivity(now) {
+      const schedCol = DAY_MAP[now.getDay()];
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+      const grid = injectPrayers(getBaseSchedule(), prayerTimesData);
+      for (let i = TIME_SLOTS.length - 1; i >= 0; i--) {
+        if (nowMins >= TIME_SLOTS[i].minutes) {
+          return grid[TIME_SLOTS[i].label][schedCol] || '';
+        }
+      }
+      return '';
+    }
+
+    function getUpcomingEvents(now) {
+      const schedCol = DAY_MAP[now.getDay()];
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+      const grid = injectPrayers(getBaseSchedule(), prayerTimesData);
+      const current = getCurrentActivity(now);
+      const events = [];
+
+      for (let i = 0; i < TIME_SLOTS.length; i++) {
+        if (TIME_SLOTS[i].minutes > nowMins) {
+          const activity = grid[TIME_SLOTS[i].label][schedCol];
+          if (activity !== current || activity === '') {
+            events.push({
+              name: DISPLAY_NAMES[activity] || activity || 'Fritid',
+              minutes: TIME_SLOTS[i].minutes,
+              type: 'schedule'
+            });
+            break;
+          }
+        }
+      }
+
+      if (prayerTimesData) {
+        ['Fajr','Dhuhr','Asr','Maghrib','Isha'].forEach(p => {
+          const iqama = getIqamaTime(p, prayerTimesData[p]);
+          const [h, m] = iqama.split(':').map(Number);
+          const pMins = h * 60 + m;
+          if (pMins > nowMins) {
+            events.push({ name: `${p}-salaah`, minutes: pMins, type: 'prayer' });
+          }
+        });
+      }
+
+
+
+      events.sort((a, b) => a.minutes - b.minutes);
+      return events;
+    }
+
+    function formatCountdown(diffMins) {
+      const h = Math.floor(diffMins / 60);
+      const m = diffMins % 60;
+      if (h > 0) return `${h}t ${m}m`;
+      return `${m}m`;
+    }
+
+    // ── MAIN UPDATE LOOP ──
+    function updateDisplay() {
+      const now = getNow();
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+
+      // Clock (24h Norwegian)
+      document.getElementById('currentTime').textContent =
+        now.toLocaleTimeString('nb-NO', {
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+          hour12: false, timeZone: TIMEZONE
+        });
+
+      // Current activity
+      const activity = getCurrentActivity(now);
+      const blockEl = document.getElementById('currentBlock');
+      const avEl = document.getElementById('availability');
+
+      if (nowMins < 330 || nowMins >= 1290) {
+        blockEl.innerHTML = 'Akkurat nå: <span class="badge badge-sleep">Sover</span>';
+        avEl.textContent = 'Sover - Ikke forstyrr';
+        avEl.className = 'availability busy';
+      } else if (activity) {
+        const cls = activity.toLowerCase();
+        let badgeCls = 'badge-' + cls;
+        if (['asr','maghrib','isha','fajr'].includes(cls)) badgeCls = 'badge-prayer';
+        const displayName = DISPLAY_NAMES[activity] || activity;
+        blockEl.innerHTML = `Akkurat nå: <span class="badge ${badgeCls}">${displayName}</span>`;
+
+        if (['ASR','MAGHRIB','ISHA','FAJR'].includes(activity)) {
+          avEl.textContent = 'Salaah - Tilgjengelig snart';
+          avEl.className = 'availability busy';
+        } else if (activity === 'SLEEP') {
+          avEl.textContent = 'Sover - Ikke forstyrr';
+          avEl.className = 'availability busy';
+        } else if (activity === 'FREELANCE') {
+          avEl.textContent = 'Jobb - Opptatt';
+          avEl.className = 'availability busy';
+        } else if (activity === 'GYM') {
+          avEl.textContent = 'Trener - Utilgjengelig';
+          avEl.className = 'availability busy';
+        } else if (activity === 'UMRAH') {
+          avEl.textContent = 'Umrah - Utilgjengelig';
+          avEl.className = 'availability busy';
+        } else if (activity === 'STUDY') {
+          avEl.textContent = 'Studerer - Opptatt';
+          avEl.className = 'availability busy';
+        } else if (activity === 'READ') {
+          avEl.textContent = 'Leser - Koser seg ned';
+          avEl.className = 'availability busy';
+        } else {
+          avEl.textContent = 'Ledig - Tilgjengelig!';
+          avEl.className = 'availability free';
+        }
+      } else {
+        blockEl.textContent = 'Akkurat nå: Fritid';
+        avEl.textContent = 'Ledig - Tilgjengelig!';
+        avEl.className = 'availability free';
+      }
+
+      // Next event
+      const upcoming = getUpcomingEvents(now);
+      const nextEl = document.getElementById('nextEvent');
+      const countEl = document.getElementById('countdown');
+
+      if (upcoming.length > 0) {
+        const next = upcoming[0];
+        const diff = next.minutes - nowMins;
+        nextEl.textContent = `Neste: ${next.name}`;
+        countEl.textContent = `om ${formatCountdown(diff)}`;
+      } else {
+        nextEl.textContent = 'Ingen flere hendelser i dag';
+        countEl.textContent = '';
+      }
+
+      updatePrayerDisplay();
+      renderSchedule();
+    }
+
+    // ── INIT ──
+    fetchPrayerTimes();
+    updateDisplay();
+    setInterval(updateDisplay, 1000);
+    setInterval(() => {
+      const now = getNow();
+      if (now.getHours() === 0 && now.getMinutes() === 0) fetchPrayerTimes();
+    }, 60000);
+  </script>
+</body>
+</html>

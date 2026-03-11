@@ -4,16 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Odd-Haralds Timeplan</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e293b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Timeplan">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
 
   <style>
     :root {
-      --block-freelance: #4f6df5;
-      --block-gym: #e8445a;
-      --block-study: #7c5cbf;
-      --block-read: #d4942a;
-      --block-sleep: #64748b;
-      --block-prayer: #1e293b;
+      --block-freelance: #2563eb;
+      --block-gym: #dc2626;
+      --block-study: #7c3aed;
+      --block-read: #d97706;
+      --block-sleep: #475569;
+      --block-prayer: #15803d;
 
       --block-umrah: #0891b2;
       --block-free: transparent;
@@ -799,6 +806,13 @@
       const now = getNow();
       if (now.getHours() === 0 && now.getMinutes() === 0) fetchPrayerTimes();
     }, 60000);
+
+    // ── SERVICE WORKER ──
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(err =>
+        console.log('SW registration failed:', err)
+      );
+    }
   </script>
 </body>
 </html>

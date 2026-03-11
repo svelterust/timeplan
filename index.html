@@ -314,7 +314,7 @@
     <!-- Status -->
     <section class="status-banner">
       <h2>Odd-Haralds Timeplan</h2>
-      <div class="current-time" id="currentTime">--:--:--</div>
+      <div class="current-time" id="currentTime">--:--</div>
       <div class="date-display" id="dateDisplay"></div>
       <div class="current-block" id="currentBlock">Laster...</div>
       <div class="next-event" id="nextEvent">--</div>
@@ -687,7 +687,7 @@
       for (let i = 0; i < TIME_SLOTS.length; i++) {
         if (TIME_SLOTS[i].minutes > nowMins) {
           const activity = grid[TIME_SLOTS[i].label][schedCol];
-          if (activity !== current || activity === '') {
+          if (activity !== current) {
             events.push({
               name: DISPLAY_NAMES[activity] || activity || 'Fritid',
               minutes: TIME_SLOTS[i].minutes,
@@ -730,7 +730,7 @@
       // Clock (24h Norwegian)
       document.getElementById('currentTime').textContent =
         now.toLocaleTimeString('nb-NO', {
-          hour: '2-digit', minute: '2-digit', second: '2-digit',
+          hour: '2-digit', minute: '2-digit',
           hour12: false, timeZone: TIMEZONE
         });
 

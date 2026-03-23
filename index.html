@@ -16,13 +16,14 @@
   <style>
     :root {
       --block-freelance: #2563eb;
-      --block-gym: #dc2626;
+      --block-arabic: #dc2626;
       --block-study: #7c3aed;
       --block-read: #d97706;
       --block-sleep: #475569;
       --block-prayer: #15803d;
 
       --block-umrah: #0891b2;
+      --block-jummah: #b45309;
       --block-free: transparent;
 
       --bg-warm: #faf9f7;
@@ -103,13 +104,14 @@
       color: #fff;
     }
     .badge-freelance { background: var(--block-freelance); }
-    .badge-gym { background: var(--block-gym); }
+    .badge-arabic { background: var(--block-arabic); }
     .badge-study { background: var(--block-study); }
     .badge-read { background: var(--block-read); }
     .badge-sleep { background: var(--block-sleep); }
     .badge-prayer { background: var(--block-prayer); }
 
     .badge-umrah { background: var(--block-umrah); }
+    .badge-jummah { background: var(--block-jummah); }
 
     /* ── Availability ── */
     .availability {
@@ -236,13 +238,14 @@
       letter-spacing: 0.03em;
     }
     .schedule-table td.block-freelance { background: var(--block-freelance); }
-    .schedule-table td.block-gym { background: var(--block-gym); }
+    .schedule-table td.block-arabic { background: var(--block-arabic); }
     .schedule-table td.block-study { background: var(--block-study); }
     .schedule-table td.block-read { background: var(--block-read); }
     .schedule-table td.block-sleep { background: var(--block-sleep); }
     .schedule-table td.block-prayer { background: var(--block-prayer); }
 
     .schedule-table td.block-umrah { background: var(--block-umrah); }
+    .schedule-table td.block-jummah { background: var(--block-jummah); }
     .schedule-table td.block-free { background: var(--bg-warm); color: var(--text-muted); }
 
 
@@ -428,7 +431,7 @@
     // Norwegian display names for activities
     const DISPLAY_NAMES = {
       'FREELANCE': 'Jobb',
-      'GYM': 'Trening',
+      'ARABIC': 'Arabisk',
       'STUDY': 'Studie',
       'READ': 'Lesing',
       'SLEEP': 'Sover',
@@ -438,13 +441,14 @@
       'FAJR': 'Fajr',
 
       'UMRAH': 'Umrah',
+      'JUMMAH': 'Jummah',
     };
 
     // ── TIME SLOTS (24h format) ──
     function buildTimeSlots() {
       const slots = [];
       let h = 5, m = 30;
-      while (h < 21 || (h === 21 && m <= 30)) {
+      while (h < 20 || (h === 20 && m <= 30)) {
         slots.push({
           hour: h, minute: m,
           label: `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`,
@@ -478,17 +482,15 @@
         if (mins >= 330 && mins < 720) {
           grid[slot.label][4] = 'FREELANCE';
         }
+        // JUMMAH Fri 12:00-13:00
+        if (mins >= 720 && mins < 780) {
+          grid[slot.label][4] = 'JUMMAH';
+        }
 
         // UMRAH Sat+Sun 05:30-13:00
         if (mins >= 330 && mins < 780) {
           grid[slot.label][5] = 'UMRAH';
           grid[slot.label][6] = 'UMRAH';
-        }
-        // GYM Mon, Wed, Sat 14:30-15:30
-        if (mins >= 870 && mins < 930) {
-          grid[slot.label][0] = 'GYM';
-          grid[slot.label][2] = 'GYM';
-          grid[slot.label][5] = 'GYM';
         }
         // STUDY Tue, Thu, Sun 14:30-15:30
         if (mins >= 870 && mins < 930) {
@@ -496,12 +498,12 @@
           grid[slot.label][3] = 'STUDY';
           grid[slot.label][6] = 'STUDY';
         }
-        // READ 21:00-21:30
-        if (mins >= 1260 && mins < 1290) {
+        // READ 20:00-20:30
+        if (mins >= 1200 && mins < 1230) {
           for (let d = 0; d < 7; d++) grid[slot.label][d] = 'READ';
         }
-        // SLEEP 21:30+
-        if (mins >= 1290) {
+        // SLEEP 20:30+
+        if (mins >= 1230) {
           for (let d = 0; d < 7; d++) grid[slot.label][d] = 'SLEEP';
         }
       });
@@ -512,6 +514,21 @@
     // Inject Asr, Maghrib, Isha into day columns based on iqama times
     function injectPrayers(grid, prayerTimes) {
       if (!prayerTimes) return grid;
+
+      // Inject ARABIC session: 1 hour before Asr adhan (1 hour duration)
+      const asrAdhan = prayerTimes['Asr'];
+      if (asrAdhan) {
+        const arabicStart = addMinutesToTime(asrAdhan, -60);
+        const arabicEnd   = addMinutesToTime(asrAdhan, 0);
+        const startMins = (function(t) { const [h,m] = t.split(':').map(Number); return h*60+m; })(arabicStart);
+        const endMins   = (function(t) { const [h,m] = t.split(':').map(Number); return h*60+m; })(arabicEnd);
+        TIME_SLOTS.forEach(slot => {
+          if (slot.minutes >= startMins && slot.minutes < endMins) {
+            for (let d = 0; d < 7; d++) grid[slot.label][d] = 'ARABIC';
+          }
+        });
+      }
+
       ['Asr','Maghrib','Isha'].forEach(p => {
         const iqamaTime = getIqamaTime(p, prayerTimes[p]);
         const slotLabel = findSlotForTime(iqamaTime);
@@ -759,8 +776,11 @@
         } else if (activity === 'FREELANCE') {
           avEl.textContent = 'Jobb - Opptatt';
           avEl.className = 'availability busy';
-        } else if (activity === 'GYM') {
-          avEl.textContent = 'Trener - Utilgjengelig';
+        } else if (activity === 'ARABIC') {
+          avEl.textContent = 'Arabisk - Opptatt';
+          avEl.className = 'availability busy';
+        } else if (activity === 'JUMMAH') {
+          avEl.textContent = 'Jummah - Utilgjengelig';
           avEl.className = 'availability busy';
         } else if (activity === 'UMRAH') {
           avEl.textContent = 'Umrah - Utilgjengelig';
